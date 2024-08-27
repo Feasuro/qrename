@@ -49,29 +49,29 @@ class Renamer(QWidget):
     def setup_controls(self):
         """ Sets up the transformation widgets for the selected files. """
         # Prefix
+        self.pvalue = QLineEdit(self)
         self.ptype = QComboBox(self)
         self.ptype.addItems(['Custom', 'Number', 'Date'])
-        self.ptype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'pvalue'))
-        self.pvalue = QLineEdit(self)
+        self.ptype.currentTextChanged.connect(lambda text: self.deactivate_field(text, self.pvalue))
         # Suffix
+        self.svalue = QLineEdit(self)
         self.stype = QComboBox(self)
         self.stype.addItems(['Custom', 'Number', 'Date'])
-        self.stype.currentTextChanged.connect(lambda text: self.deactivate_field(text,'svalue'))
-        self.svalue = QLineEdit(self)
+        self.stype.currentTextChanged.connect(lambda text: self.deactivate_field(text, self.svalue))
         # Name
+        self.nvalue = QLineEdit(self)
+        self.nvalue.setDisabled(True)
         self.ntype = QComboBox(self)
         self.ntype.addItems(['Source name', 'lower case', 'UPPER CASE', 'Title Case',
                              'Capitalize text', 'Custom name'])
-        self.ntype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'nvalue'))
-        self.nvalue = QLineEdit(self)
-        self.nvalue.setDisabled(True)
+        self.ntype.currentTextChanged.connect(lambda text: self.deactivate_field(text, self.nvalue))
         # Extension
+        self.evalue = QLineEdit(self)
+        self.evalue.setDisabled(True)
         self.etype = QComboBox(self)
         self.etype.addItems(['Source extension', 'lower case', 'UPPER CASE', 'Title Case',
                              'Capitalize text', 'Custom extension'])
-        self.etype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'evalue'))
-        self.evalue = QLineEdit(self)
-        self.evalue.setDisabled(True)
+        self.etype.currentTextChanged.connect(lambda text: self.deactivate_field(text, self.evalue))
         # Number
         self.digits = QSpinBox(self)
         self.start = QSpinBox(self)
@@ -129,29 +129,12 @@ class Renamer(QWidget):
                     result += self.evalue.text()
         return result
 
-    def deactivate_field(self, text: str, field: str):
+    def deactivate_field(self, text: str, field: QLineEdit):
         """ Deactivates the transformation fields when specific option is chosen """
-        match field:
-            case 'pvalue':
-                if text == 'Custom':
-                    self.pvalue.setDisabled(False)
-                else:
-                    self.pvalue.setDisabled(True)
-            case 'svalue':
-                if text == 'Custom':
-                    self.svalue.setDisabled(False)
-                else:
-                    self.svalue.setDisabled(True)
-            case 'nvalue':
-                if text == 'Custom name':
-                    self.nvalue.setDisabled(False)
-                else:
-                    self.nvalue.setDisabled(True)
-            case 'evalue':
-                if text == 'Custom extension':
-                    self.evalue.setDisabled(False)
-                else:
-                    self.evalue.setDisabled(True)
+        if text.startswith('Custom'):
+            field.setDisabled(False)
+        else:
+            field.setDisabled(True)
 
 
 class RenameWindow(QMainWindow):
