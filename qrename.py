@@ -51,23 +51,25 @@ class Renamer(QWidget):
         # Prefix
         self.ptype = QComboBox(self)
         self.ptype.addItems(['Custom', 'Number', 'Date'])
-        self.ptype.activated.connect(lambda index: self.deactivate_field(index, 'pvalue'))
+        self.ptype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'pvalue'))
         self.pvalue = QLineEdit(self)
         # Suffix
         self.stype = QComboBox(self)
         self.stype.addItems(['Custom', 'Number', 'Date'])
-        self.stype.activated.connect(lambda index: self.deactivate_field(index,'svalue'))
+        self.stype.currentTextChanged.connect(lambda text: self.deactivate_field(text,'svalue'))
         self.svalue = QLineEdit(self)
         # Name
         self.ntype = QComboBox(self)
-        self.ntype.addItems(['Source name', 'lower case', 'UPPER CASE', 'Title Case', 'Capitalize text', 'Custom name'])
-        self.ntype.activated.connect(lambda index: self.deactivate_field(index, 'nvalue'))
+        self.ntype.addItems(['Source name', 'lower case', 'UPPER CASE', 'Title Case',
+                             'Capitalize text', 'Custom name'])
+        self.ntype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'nvalue'))
         self.nvalue = QLineEdit(self)
         self.nvalue.setDisabled(True)
         # Extension
         self.etype = QComboBox(self)
-        self.etype.addItems(['Source extension', 'lower case', 'UPPER CASE', 'Title Case', 'Capitalize text', 'Custom extension'])
-        self.etype.activated.connect(lambda index: self.deactivate_field(index, 'evalue'))
+        self.etype.addItems(['Source extension', 'lower case', 'UPPER CASE', 'Title Case',
+                             'Capitalize text', 'Custom extension'])
+        self.etype.currentTextChanged.connect(lambda text: self.deactivate_field(text, 'evalue'))
         self.evalue = QLineEdit(self)
         self.evalue.setDisabled(True)
         # Number
@@ -77,7 +79,7 @@ class Renamer(QWidget):
         self.date = QDateEdit(self)
         self.date.setDisplayFormat('dd-MM-yyyy')
         self.date.setCalendarPopup(True)
-    
+
     def transform(self, string: str, index: int) -> str:
         """ Performs the string transformation based on the selected options. """
         result = ''
@@ -98,7 +100,7 @@ class Renamer(QWidget):
                 result += basename.upper()
             case 'Title Case':
                 result += basename.title()
-            case 'Capitalize':
+            case 'Capitalize text':
                 result += basename.capitalize()
             case 'Custom name':
                 result += self.nvalue.text()
@@ -122,32 +124,33 @@ class Renamer(QWidget):
             case 'Capitalize':
                 result += extension.capitalize()
             case 'Custom extension':
-                result += '.'
-                result += self.evalue.text()
+                if self.evalue.text():
+                    result += '.'
+                    result += self.evalue.text()
         return result
-    
-    def deactivate_field(self, index: int, field: str):
+
+    def deactivate_field(self, text: str, field: str):
         """ Deactivates the transformation fields when specific option is chosen """
         match field:
             case 'pvalue':
-                if index == 0:  # Custom
+                if text == 'Custom':
                     self.pvalue.setDisabled(False)
-                else:  # Number, Date
+                else:
                     self.pvalue.setDisabled(True)
             case 'svalue':
-                if index == 0:  # Custom
+                if text == 'Custom':
                     self.svalue.setDisabled(False)
-                else:  # Number, Date
+                else:
                     self.svalue.setDisabled(True)
             case 'nvalue':
-                if index == 5:  # Custom
+                if text == 'Custom name':
                     self.nvalue.setDisabled(False)
-                else:  # Other values
+                else:
                     self.nvalue.setDisabled(True)
             case 'evalue':
-                if index == 5:  # Custom
+                if text == 'Custom extension':
                     self.evalue.setDisabled(False)
-                else:  # Other values
+                else:
                     self.evalue.setDisabled(True)
 
 
@@ -159,8 +162,9 @@ class RenameWindow(QMainWindow):
         self.resize(1000, 500)
         self.files = []
         self.setup_ui()
+        self.setup_signals()
         self.show()
-    
+
     def setup_ui(self):
         """ Creates the main window layout and widgets. """
         #create renamer central widget
@@ -195,13 +199,32 @@ class RenameWindow(QMainWindow):
         #rename files when button is clicked
         self.rename_button.clicked.connect(self.rename_files)
 
+    def setup_signals(self):
+        """ Connects signals from the renamer to the main window. """
+        self.renamer.ptype.textActivated.connect(self.compute_names)
+        self.renamer.pvalue.textEdited.connect(self.compute_names)
+        self.renamer.stype.textActivated.connect(self.compute_names)
+        self.renamer.svalue.textEdited.connect(self.compute_names)
+        self.renamer.ntype.textActivated.connect(self.compute_names)
+        self.renamer.nvalue.textEdited.connect(self.compute_names)
+        self.renamer.etype.textActivated.connect(self.compute_names)
+        self.renamer.evalue.textEdited.connect(self.compute_names)
+        self.renamer.digits.valueChanged.connect(self.compute_names)
+        self.renamer.start.valueChanged.connect(self.compute_names)
+        self.renamer.date.dateChanged.connect(self.compute_names)
+
     def open_files(self):
-        """ Opens file dialog and adds selected files to the left dock. """
+        """ Opens file dialog and adds selected files to the docks. """
         self.files, _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
         for index, file in enumerate(self.files):
             self.old_names.addItem(os.path.basename(file))
             self.new_names.addItem(os.path.basename(self.renamer.transform(file, index)))
-    
+
+    def compute_names(self):
+        """ Computes the new names for all files. """
+        for index, file in enumerate(self.files):
+            self.new_names.item(index).setText(self.renamer.transform(file, index))
+
     def rename_files(self):
         """ Renames files based on the new names provided in the right dock. """
         #new_names = [item.text() for item in self.new_names.items()]
