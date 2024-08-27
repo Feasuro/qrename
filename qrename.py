@@ -4,18 +4,83 @@ import sys, os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,
-                             QFormLayout , QListWidget, QFileDialog, QPushButton, QLineEdit)
+                             QGridLayout , QListWidget, QFileDialog, QPushButton, QLineEdit,
+                             QComboBox, QLabel)
 
 
 class Renamer(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.setup_controls()
         # create a layout
-        layout = QFormLayout()
-        layout.addRow('Prefix:', QLineEdit(self))
-        layout.addRow('Suffix:', QLineEdit(self))
+        layout = QGridLayout()
+        layout.addWidget(QLabel('Prefix:'), 0, 0)
+        layout.addWidget(self.ptype, 0, 1)
+        layout.addWidget(self.pvalue, 0, 2)
+        layout.addWidget(QLabel('Suffix:'), 1, 0)
+        layout.addWidget(self.stype, 1, 1)
+        layout.addWidget(self.svalue, 1, 2)
+        layout.addWidget(QLabel('Name:'), 2, 0)
+        layout.addWidget(self.ntype, 2, 1)
+        layout.addWidget(self.nvalue, 2, 2)
+        layout.addWidget(QLabel('Extension:'), 3, 0)
+        layout.addWidget(self.etype, 3, 1)
+        layout.addWidget(self.evalue, 3, 2)
         self.setLayout(layout)
+    
+    def setup_controls(self):
+        """ Sets up the transformation widgets for the selected files. """
+        # Prefix
+        self.ptype = QComboBox(self)
+        self.ptype.addItems(['Custom', 'Number', 'Date'])
+        self.ptype.activated.connect(lambda index: self.deactivate_field(index, 'pvalue'))
+        self.pvalue = QLineEdit(self)
+        # Suffix
+        self.stype = QComboBox(self)
+        self.stype.addItems(['Custom', 'Number', 'Date'])
+        self.stype.activated.connect(lambda index: self.deactivate_field(index,'svalue'))
+        self.svalue = QLineEdit(self)
+        # Name
+        self.ntype = QComboBox(self)
+        self.ntype.addItems(['Source name', 'lower case', 'UPPER CASE', 'Capitalize', 'Custom name'])
+        self.ntype.activated.connect(lambda index: self.deactivate_field(index, 'nvalue'))
+        self.nvalue = QLineEdit(self)
+        self.nvalue.setDisabled(True)
+        # Extension
+        self.etype = QComboBox(self)
+        self.etype.addItems(['Source extension', 'lower case', 'UPPER CASE', 'Capitalize', 'Custom extension'])
+        self.etype.activated.connect(lambda index: self.deactivate_field(index, 'evalue'))
+        self.evalue = QLineEdit(self)
+        self.evalue.setDisabled(True)
+    
+    def transform(self, string: str) -> str:
+        """ Performs the string transformation based on the selected options. """
+        # TODO: Implement the transformation logic here
+        pass
+    
+    def deactivate_field(self, index: int, field: str):
+        """ Deactivates the transformation fields when specific option is chosen """
+        match field:
+            case 'pvalue':
+                if index == 0:  # Custom
+                    self.pvalue.setDisabled(False)
+                else:  # Number, Date
+                    self.pvalue.setDisabled(True)
+            case 'svalue':
+                if index == 0:  # Custom
+                    self.svalue.setDisabled(False)
+                else:  # Number, Date
+                    self.svalue.setDisabled(True)
+            case 'nvalue':
+                if index == 4:  # Custom
+                    self.nvalue.setDisabled(False)
+                else:  # Other values
+                    self.nvalue.setDisabled(True)
+            case 'evalue':
+                if index == 4:  # Custom
+                    self.evalue.setDisabled(False)
+                else:  # Other values
+                    self.evalue.setDisabled(True)
 
 
 class RenameWindow(QMainWindow):
@@ -23,9 +88,10 @@ class RenameWindow(QMainWindow):
         super().__init__()
         #size and title
         self.setWindowTitle("Qrename")
-        self.resize(400, 300)
+        self.resize(1000, 500)
 
         self.setup_ui()
+        self.show()
     
     def setup_ui(self):
         """ Creates the main window layout and widgets. """
@@ -77,5 +143,4 @@ class RenameWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = RenameWindow()
-    window.show()
     sys.exit(app.exec())
