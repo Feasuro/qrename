@@ -5,7 +5,8 @@ import sys, os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,
                              QGridLayout, QFormLayout, QListWidget, QFileDialog, QPushButton,
-                             QLineEdit, QComboBox, QSpinBox, QDateEdit, QLabel, QGroupBox)
+                             QLineEdit, QComboBox, QSpinBox, QDateEdit, QLabel, QGroupBox,
+                             QMessageBox)
 
 
 class Renamer(QWidget):
@@ -146,7 +147,6 @@ class RenameWindow(QMainWindow):
         self.files = []
         self.setup_ui()
         self.setup_signals()
-        self.show()
 
     def setup_ui(self):
         """ Creates the main window layout and widgets. """
@@ -161,12 +161,10 @@ class RenameWindow(QMainWindow):
         layout.addWidget(self.old_names)
         layout.addWidget(self.open_button)
         container.setLayout(layout)
-        leftdock = QDockWidget('Selected Files')
-        leftdock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-        leftdock.setWidget(container)
-        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, leftdock)
-        #open file dialog when button is clicked
-        self.open_button.clicked.connect(self.open_files)
+        dock = QDockWidget('Selected Files')
+        dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        dock.setWidget(container)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         #right dock for new name presentation
         self.new_names = QListWidget()
         self.rename_button = QPushButton("Rename Files")
@@ -175,15 +173,13 @@ class RenameWindow(QMainWindow):
         layout.addWidget(self.new_names)
         layout.addWidget(self.rename_button)
         container.setLayout(layout)
-        rightdock = QDockWidget('New Names')
-        rightdock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-        rightdock.setWidget(container)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, rightdock)
-        #rename files when button is clicked
-        self.rename_button.clicked.connect(self.rename_files)
+        dock = QDockWidget('New Names')
+        dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        dock.setWidget(container)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
 
     def setup_signals(self):
-        """ Connects signals from the renamer to the main window. """
+        """ Connects signals from the renamer and buttons to the main window. """
         self.renamer.ptype.textActivated.connect(self.compute_names)
         self.renamer.pvalue.textEdited.connect(self.compute_names)
         self.renamer.stype.textActivated.connect(self.compute_names)
@@ -195,10 +191,14 @@ class RenameWindow(QMainWindow):
         self.renamer.digits.valueChanged.connect(self.compute_names)
         self.renamer.start.valueChanged.connect(self.compute_names)
         self.renamer.date.dateChanged.connect(self.compute_names)
+        self.open_button.clicked.connect(self.open_files)
+        self.rename_button.clicked.connect(self.rename_files)
 
     def open_files(self):
         """ Opens file dialog and adds selected files to the docks. """
         self.files, _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
+        self.old_names.clear()
+        self.new_names.clear()
         for index, file in enumerate(self.files):
             self.old_names.addItem(os.path.basename(file))
             self.new_names.addItem(os.path.basename(self.renamer.transform(file, index)))
@@ -209,13 +209,48 @@ class RenameWindow(QMainWindow):
             self.new_names.item(index).setText(self.renamer.transform(file, index))
 
     def rename_files(self):
-        """ Renames files based on the new names provided in the right dock. """
-        #new_names = [item.text() for item in self.new_names.items()]
-        #for i, file in enumerate(self.old_names.items()):
-        #    self.old_names.setItemText(i, f"{file.text()} ({new_names[i]})")
+        """ Renames files to the new names shown in the right dock. """
+        answer = None
+        new_files = list(self.files)
+        for index, file in enumerate(self.files):
+            new_name = os.path.join(os.path.dirname(file), self.renamer.transform(file, index))
+            # Check if destination already exists
+            if answer != QMessageBox.StandardButton.YesToAll and os.path.lexists(new_name):
+                if answer == QMessageBox.StandardButton.NoToAll:
+                    continue
+                answer = QMessageBox.question(
+                    self,
+                    'File exists',
+                    f'File {new_name} already exists, do you want to overwrite it?',
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.YesToAll |
+                    QMessageBox.StandardButton.NoToAll | QMessageBox.StandardButton.No)
+            if answer == QMessageBox.StandardButton.Yes or answer == QMessageBox.StandardButton.YesToAll:
+                # Rename the file
+                try:
+                    os.replace(file, new_name)
+                except FileNotFoundError:
+                    QMessageBox.critical(self, "Error", f"FileNotFoundError: The file '{file}' was not found.")
+                except PermissionError:
+                    QMessageBox.critical(self, 'Error', f"PermissionError: Permission denied when renaming the file '{file}'.")
+                except IsADirectoryError:
+                    QMessageBox.critical(self, 'Error', f"IsADirectoryError: '{file}' is a directory, not a file.")
+                except OSError as e:
+                    QMessageBox.critical(self, 'Error', f"OSError: An OS error occurred when renaming '{file}': {e}")
+                except Exception as e:
+                    QMessageBox.critical(self, 'Error', f"Unexpected error when renaming '{file}': {e}")
+                else:
+                    new_files[index] = new_name
+        # Update the file names in the docks
+        self.files = new_files
+        self.old_names.clear()
+        self.new_names.clear()
+        for index, file in enumerate(self.files):
+            self.old_names.addItem(os.path.basename(file))
+            self.new_names.addItem(os.path.basename(self.renamer.transform(file, index)))
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = RenameWindow()
+    window.show()
     sys.exit(app.exec())
