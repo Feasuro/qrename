@@ -34,10 +34,13 @@ class RenameWindow(QMainWindow):
         self.old_names = QListWidget()
         open_button = QPushButton("Open Files")
         open_button.clicked.connect(self.open_files)
+        add_button = QPushButton("Add Files")
+        add_button.clicked.connect(lambda: self.open_files(add=True))
         container = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.old_names)
         layout.addWidget(open_button)
+        layout.addWidget(add_button)
         container.setLayout(layout)
         dock = QDockWidget('Selected Files')
         dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
@@ -82,9 +85,13 @@ class RenameWindow(QMainWindow):
         else: # index == 1
             self.renamer = self.a_renamer
 
-    def open_files(self) -> None:
+    def open_files(self, add=False) -> None:
         """ Opens file dialog and adds selected files to the docks. """
-        self.files, _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
+        files , _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
+        if add:
+            self.files.extend(files)
+        else:
+            self.files = files
         self.display_files()
 
     def display_files(self) -> None:
