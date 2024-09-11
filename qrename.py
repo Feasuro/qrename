@@ -2,7 +2,7 @@
 
 import sys, os
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QCommandLineParser
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,
                              QListWidget, QFileDialog, QPushButton, QMessageBox, QTabWidget)
 
@@ -81,6 +81,10 @@ class RenameWindow(QMainWindow):
     def open_files(self) -> None:
         """ Opens file dialog and adds selected files to the docks. """
         self.files, _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
+        self.display_files()
+
+    def display_files(self) -> None:
+        """ Displays selected files in the left and right dock. """
         self.old_names.clear()
         self.new_names.clear()
         for index, file in enumerate(self.files):
@@ -126,15 +130,35 @@ class RenameWindow(QMainWindow):
                     new_files[index] = new_name
         # Update the file names in the docks
         self.files = new_files
-        self.old_names.clear()
-        self.new_names.clear()
-        for index, file in enumerate(self.files):
-            self.old_names.addItem(os.path.basename(file))
-            self.new_names.addItem(self.renamer.transform(file, index))
+        self.display_files()
 
+
+class ArgumentParser(QCommandLineParser):
+    """ Parses command-line arguments. """
+    def __init__(self, *args, **kwargs):
+        """ Initializes the argument parser options. """
+        super().__init__(*args, **kwargs)
+        self.setApplicationDescription("Rename files based on user-provided parameters.")
+        self.addHelpOption()
+        self.addVersionOption()
+        self.addPositionalArgument('file', 'files to be renamed or directory path', '[directory/file file ...]')
+
+    def file_list(self) -> list:
+        """ Returns a list of file paths from positional arguments. """
+        if self.positionalArguments():
+            if os.path.isdir(self.positionalArguments()[0]):
+                return [os.path.abspath(path) for path in os.listdir(self.positionalArguments()[0])]
+            return [os.path.abspath(path) for path in self.positionalArguments() if os.path.lexists(path)]
+        return []
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setApplicationName("Qrename")
+    app.setApplicationVersion("v1.1")
+    parser = ArgumentParser()
+    parser.process(app)
     window = RenameWindow()
+    window.files = parser.file_list()
+    window.display_files()
     window.show()
     sys.exit(app.exec())
