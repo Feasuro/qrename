@@ -59,23 +59,26 @@ class RenameWindow(QMainWindow):
 
     def setup_signals(self) -> None:
         """ Connects signals from the renamers to the main window. """
-        self.b_renamer.ptype.textActivated.connect(self.compute_names)
-        self.b_renamer.pvalue.textEdited.connect(self.compute_names)
-        self.b_renamer.stype.textActivated.connect(self.compute_names)
-        self.b_renamer.svalue.textEdited.connect(self.compute_names)
-        self.b_renamer.ntype.textActivated.connect(self.compute_names)
-        self.b_renamer.nvalue.textEdited.connect(self.compute_names)
-        self.b_renamer.etype.textActivated.connect(self.compute_names)
-        self.b_renamer.evalue.textEdited.connect(self.compute_names)
-        self.b_renamer.digits.valueChanged.connect(self.compute_names)
-        self.b_renamer.start.valueChanged.connect(self.compute_names)
-        self.b_renamer.date.dateChanged.connect(self.compute_names)
+        self.b_renamer.ptype.textActivated.connect(self.refresh_names)
+        self.b_renamer.pvalue.textEdited.connect(self.refresh_names)
+        self.b_renamer.stype.textActivated.connect(self.refresh_names)
+        self.b_renamer.svalue.textEdited.connect(self.refresh_names)
+        self.b_renamer.ntype.textActivated.connect(self.refresh_names)
+        self.b_renamer.nvalue.textEdited.connect(self.refresh_names)
+        self.b_renamer.etype.textActivated.connect(self.refresh_names)
+        self.b_renamer.evalue.textEdited.connect(self.refresh_names)
+        self.b_renamer.digits.valueChanged.connect(self.refresh_names)
+        self.b_renamer.start.valueChanged.connect(self.refresh_names)
+        self.b_renamer.date.dateChanged.connect(self.refresh_names)
+        self.a_renamer.inreg.textEdited.connect(self.refresh_names)
+        self.a_renamer.outreg.textEdited.connect(self.refresh_names)
+        self.a_renamer.count.valueChanged.connect(self.refresh_names)
 
     def set_renamer(self, index: int) -> None:
         """ Sets the current renamer based on the selected tab. """
         if index == 0:
             self.renamer = self.b_renamer
-        else:
+        else: # index == 1
             self.renamer = self.a_renamer
 
     def open_files(self) -> None:
@@ -91,7 +94,7 @@ class RenameWindow(QMainWindow):
             self.old_names.addItem(os.path.basename(file))
             self.new_names.addItem(self.renamer.transform(file, index))
 
-    def compute_names(self) -> None:
+    def refresh_names(self) -> None:
         """ Computes the new names for all files. """
         for index, file in enumerate(self.files):
             self.new_names.item(index).setText(self.renamer.transform(file, index))

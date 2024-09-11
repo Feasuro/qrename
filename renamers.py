@@ -168,15 +168,20 @@ class AdvancedRenamer(Renamer):
         """ Sets up fields for the transformation regular expressions. """
         self.inreg = QLineEdit(self)
         self.outreg = QLineEdit(self)
+        self.count = QSpinBox(self)
 
     def setup_layout(self) -> None:
         """ Sets up the layout for the advanced renamer window. """
         layout = QFormLayout()
-        layout.addRow('Input regular expression:', self.inreg)
-        layout.addRow('Output regular expression:', self.outreg)
+        layout.addRow('Pattern regular expression:', self.inreg)
+        layout.addRow('Replacement', self.outreg)
+        layout.addRow('Maximal number of replacements', self.count)
         self.setLayout(layout)
 
     def transform(self, path: str, index: int) -> str:
         """ Performs the string transformation based on the provided regular expressions. """
-        # TODO: Implement
-        #return re.sub(self.inreg.text(), self.outreg.text(), path)
+        try:
+            return re.sub(self.inreg.text(), self.outreg.text(), os.path.basename(path), count=self.count.value())
+        except re.error as e:
+            print(f"Warning: Invalid regular expression: {e}")
+            return os.path.basename(path)
