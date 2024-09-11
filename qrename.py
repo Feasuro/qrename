@@ -152,7 +152,7 @@ class ArgumentParser(QCommandLineParser):
         self.setApplicationDescription("Rename files based on user-provided parameters.")
         self.addHelpOption()
         self.addVersionOption()
-        self.addPositionalArgument('file', 'files to be renamed or directory path', '[directory/file file ...]')
+        self.addPositionalArgument('file', 'files to be renamed or directory path', '[directory/file1 file2 ...]')
 
     def file_list(self) -> list:
         """ Returns a list of file paths from positional arguments. """
@@ -162,12 +162,22 @@ class ArgumentParser(QCommandLineParser):
             return [os.path.abspath(path) for path in self.positionalArguments() if os.path.lexists(path)]
         return []
 
+    def check_args(self, app: QApplication) -> None:
+        """ Checks if positional arguments are valid paths. """
+        self.process(app)
+        if self.positionalArguments():
+            for arg in self.positionalArguments():
+                if not os.path.lexists(arg):
+                    print(f"Error: File '{arg}' does not exist.\n")
+                    self.showHelp(exitCode=1)
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName("Qrename")
     app.setApplicationVersion("v1.1")
     parser = ArgumentParser()
-    parser.process(app)
+    parser.check_args(app)
     window = RenameWindow()
     window.files = parser.file_list()
     window.display_files()
