@@ -123,7 +123,7 @@ class RenameWindow(QMainWindow):
                     f'File {new_name} already exists, do you want to overwrite it?',
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.YesToAll |
                     QMessageBox.StandardButton.NoToAll | QMessageBox.StandardButton.No)
-            if answer == QMessageBox.StandardButton.Yes or answer == QMessageBox.StandardButton.YesToAll:
+            if answer is None or answer == QMessageBox.StandardButton.Yes or answer == QMessageBox.StandardButton.YesToAll:
                 # Rename the file
                 try:
                     os.replace(file, new_name)
