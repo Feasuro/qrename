@@ -4,6 +4,7 @@ import os
 import re
 
 from abc import ABC, abstractmethod
+from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import (QWidget, QGridLayout, QFormLayout, QGroupBox, QLabel, QLineEdit,
                              QComboBox, QSpinBox, QDateEdit)
 
@@ -61,6 +62,7 @@ class BasicRenamer(Renamer):
         group = QGroupBox('Date and Time')
         grouplayout = QFormLayout()
         grouplayout.addRow('Date:', self.date)
+        grouplayout.addRow('Date format:', self.dformat)
         group.setLayout(grouplayout)
         layout.addWidget(group, 5, 0, 1, 3)
         # set layout
@@ -96,9 +98,12 @@ class BasicRenamer(Renamer):
         self.digits = QSpinBox(self)
         self.start = QSpinBox(self)
         # Date
-        self.date = QDateEdit(self)
+        self.date = QDateEdit(QDate().currentDate(), self)
         self.date.setDisplayFormat('dd-MM-yyyy')
         self.date.setCalendarPopup(True)
+        self.dformat = QComboBox(self)
+        self.dformat.addItems(['dd-MM-yyyy', 'dd.MM.yyyy', 'dd-MM-yy', 'dd.MM.yy', 'ddMMMyyyy', 'ddMMMMyyyy'])
+        self.dformat.currentTextChanged.connect(self.date.setDisplayFormat)
 
     def transform(self, path: str, index: int) -> str:
         """ Performs the string transformation based on the selected options. """
@@ -107,7 +112,7 @@ class BasicRenamer(Renamer):
             case 'Number':
                 result += str(self.start.value() + index).zfill(self.digits.value())
             case 'Date':
-                result += self.date.date().toString('dd-MM-yyyy')
+                result += self.date.date().toString(self.date.displayFormat())
             case 'Custom':
                 result += self.pvalue.text()
         basename = os.path.splitext(os.path.basename(path))[0]
@@ -128,7 +133,7 @@ class BasicRenamer(Renamer):
             case 'Number':
                 result += str(self.start.value() + index).zfill(self.digits.value())
             case 'Date':
-                result += self.date.date().toString('dd-MM-yyyy')
+                result += self.date.date().toString(self.date.displayFormat())
             case 'Custom':
                 result += self.svalue.text()
         extension = os.path.splitext(os.path.basename(path))[1]

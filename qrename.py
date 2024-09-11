@@ -59,17 +59,18 @@ class RenameWindow(QMainWindow):
 
     def setup_signals(self) -> None:
         """ Connects signals from the renamers to the main window. """
-        self.b_renamer.ptype.textActivated.connect(self.refresh_names)
+        self.b_renamer.ptype.currentTextChanged.connect(self.refresh_names)
         self.b_renamer.pvalue.textEdited.connect(self.refresh_names)
-        self.b_renamer.stype.textActivated.connect(self.refresh_names)
+        self.b_renamer.stype.currentTextChanged.connect(self.refresh_names)
         self.b_renamer.svalue.textEdited.connect(self.refresh_names)
-        self.b_renamer.ntype.textActivated.connect(self.refresh_names)
+        self.b_renamer.ntype.currentTextChanged.connect(self.refresh_names)
         self.b_renamer.nvalue.textEdited.connect(self.refresh_names)
-        self.b_renamer.etype.textActivated.connect(self.refresh_names)
+        self.b_renamer.etype.currentTextChanged.connect(self.refresh_names)
         self.b_renamer.evalue.textEdited.connect(self.refresh_names)
         self.b_renamer.digits.valueChanged.connect(self.refresh_names)
         self.b_renamer.start.valueChanged.connect(self.refresh_names)
         self.b_renamer.date.dateChanged.connect(self.refresh_names)
+        self.b_renamer.dformat.currentTextChanged.connect(self.refresh_names)
         self.a_renamer.inreg.textEdited.connect(self.refresh_names)
         self.a_renamer.outreg.textEdited.connect(self.refresh_names)
         self.a_renamer.count.valueChanged.connect(self.refresh_names)
