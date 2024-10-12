@@ -2,11 +2,13 @@
 
 import sys, os
 
-from PyQt6.QtCore import Qt, QCommandLineParser
+from PyQt6.QtCore import Qt, QCommandLineParser, QTranslator, QLibraryInfo, QLocale
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,
                              QListWidget, QFileDialog, QPushButton, QMessageBox, QTabWidget)
 
 from renamers import BasicRenamer, AdvancedRenamer
+import resources
+
 
 class RenameWindow(QMainWindow):
     """ The main window for renaming files program. """
@@ -26,15 +28,15 @@ class RenameWindow(QMainWindow):
         self.a_renamer = AdvancedRenamer()
         self.renamer = self.b_renamer
         tabs = QTabWidget()
-        tabs.addTab(self.b_renamer, "Basic Renamer")
-        tabs.addTab(self.a_renamer, "Advanced Renamer")
+        tabs.addTab(self.b_renamer, self.tr("Basic Renamer"))
+        tabs.addTab(self.a_renamer, self.tr("Advanced Renamer"))
         tabs.currentChanged.connect(self.set_renamer)
         self.setCentralWidget(tabs)
         #left dock for files management
         self.old_names = QListWidget()
-        open_button = QPushButton("Open Files")
+        open_button = QPushButton(self.tr("Open Files"))
         open_button.clicked.connect(self.open_files)
-        add_button = QPushButton("Add Files")
+        add_button = QPushButton(self.tr("Add Files"))
         add_button.clicked.connect(lambda: self.open_files(add=True))
         container = QWidget()
         layout = QVBoxLayout()
@@ -42,20 +44,20 @@ class RenameWindow(QMainWindow):
         layout.addWidget(open_button)
         layout.addWidget(add_button)
         container.setLayout(layout)
-        dock = QDockWidget('Selected Files')
+        dock = QDockWidget(self.tr("Selected Files"))
         dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         dock.setWidget(container)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         #right dock for new name presentation
         self.new_names = QListWidget()
-        rename_button = QPushButton("Rename Files")
+        rename_button = QPushButton(self.tr("Rename Files"))
         rename_button.clicked.connect(self.rename_files)
         container = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.new_names)
         layout.addWidget(rename_button)
         container.setLayout(layout)
-        dock = QDockWidget('New Names')
+        dock = QDockWidget(self.tr("New Names"))
         dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         dock.setWidget(container)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
@@ -87,7 +89,7 @@ class RenameWindow(QMainWindow):
 
     def open_files(self, add=False) -> None:
         """ Opens file dialog and adds selected files to the docks. """
-        files , _ = QFileDialog.getOpenFileNames(self, "Select Files", "", "All Files (*)")
+        files , _ = QFileDialog.getOpenFileNames(self, self.tr("Select Files"), "", self.tr("All Files (*)"))
         if add:
             self.files.extend(files)
         else:
@@ -119,8 +121,8 @@ class RenameWindow(QMainWindow):
                     continue
                 answer = QMessageBox.question(
                     self,
-                    'File exists',
-                    f'File {new_name} already exists, do you want to overwrite it?',
+                    self.tr("File exists"),
+                    self.tr("File {} already exists, do you want to overwrite it?").format(new_name),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.YesToAll |
                     QMessageBox.StandardButton.NoToAll | QMessageBox.StandardButton.No)
             if answer is None or answer == QMessageBox.StandardButton.Yes or answer == QMessageBox.StandardButton.YesToAll:
@@ -128,15 +130,20 @@ class RenameWindow(QMainWindow):
                 try:
                     os.replace(file, new_name)
                 except FileNotFoundError:
-                    QMessageBox.critical(self, "Error", f"FileNotFoundError: The file '{file}' was not found.")
+                    QMessageBox.critical(self, self.tr("Error"),
+               self.tr("FileNotFoundError: The file '{}' was not found.").format(file))
                 except PermissionError:
-                    QMessageBox.critical(self, 'Error', f"PermissionError: Permission denied when renaming the file '{file}'.")
+                    QMessageBox.critical(self, self.tr("Error"),
+               self.tr("PermissionError: Permission denied when renaming the file '{}'.").format(file))
                 except IsADirectoryError:
-                    QMessageBox.critical(self, 'Error', f"IsADirectoryError: '{file}' is a directory, not a file.")
+                    QMessageBox.critical(self, self.tr("Error"),
+               self.tr("IsADirectoryError: '{}' is a directory, not a file.").format(file))
                 except OSError as e:
-                    QMessageBox.critical(self, 'Error', f"OSError: An OS error occurred when renaming '{file}': {e}")
+                    QMessageBox.critical(self, self.tr("Error"),
+               self.tr("OSError: An OS error occurred when renaming '{}': {}").format(file, e))
                 except Exception as e:
-                    QMessageBox.critical(self, 'Error', f"Unexpected error when renaming '{file}': {e}")
+                    QMessageBox.critical(self, self.tr("Error"),
+               self.tr("Unexpected error when renaming '{}': {}").format(file, e))
                 else:
                     new_files[index] = new_name
         # Update the file names in the docks
@@ -146,13 +153,16 @@ class RenameWindow(QMainWindow):
 
 class ArgumentParser(QCommandLineParser):
     """ Parses command-line arguments. """
+    tr = lambda obj, string: QApplication.translate(type(obj).__name__, string)
     def __init__(self, *args, **kwargs):
         """ Initializes the argument parser options. """
         super().__init__(*args, **kwargs)
-        self.setApplicationDescription("Rename files based on user-provided parameters.")
+        self.setApplicationDescription(self.tr("Rename files based on user-provided parameters."))
         self.addHelpOption()
         self.addVersionOption()
-        self.addPositionalArgument('file', 'files to be renamed or directory path', '[directory/file1 file2 ...]')
+        self.addPositionalArgument(self.tr("file"),
+                                   self.tr("files to be renamed or containing directory path"),
+                                   self.tr("[directory/file1 file2 ...]"))
 
     def file_list(self) -> list:
         """ Returns a list of file paths from positional arguments. """
@@ -168,14 +178,24 @@ class ArgumentParser(QCommandLineParser):
         if self.positionalArguments():
             for arg in self.positionalArguments():
                 if not os.path.lexists(arg):
-                    print(f"Error: File '{arg}' does not exist.\n")
+                    print(self.tr("Error: File '{}' does not exist.\n").format(arg))
                     self.showHelp(exitCode=1)
 
 
 if __name__ == "__main__":
+    # Instantiate the application
     app = QApplication(sys.argv)
     app.setApplicationName("Qrename")
     app.setApplicationVersion("v1.1")
+    # Load translations
+    path = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    translator = QTranslator(app)
+    if translator.load(QLocale(), "qtbase", "_", path):
+        app.installTranslator(translator)
+    translator = QTranslator(app)
+    if translator.load(QLocale(), "qrename", "_", ":/i18n"):
+        app.installTranslator(translator)
+    # Parse command line arguments and show window
     parser = ArgumentParser()
     parser.check_args(app)
     window = RenameWindow()
