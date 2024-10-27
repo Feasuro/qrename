@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys
+import os
 
 from PyQt6.QtCore import Qt, QCommandLineParser, QTranslator, QLibraryInfo, QLocale
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,

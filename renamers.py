@@ -2,8 +2,8 @@
 
 import os
 import re
-
 from abc import ABC, abstractmethod
+
 from PyQt6.QtCore import QDate, QCoreApplication, QLocale
 from PyQt6.QtWidgets import (QWidget, QGridLayout, QFormLayout, QGroupBox, QLabel, QLineEdit,
                              QComboBox, QSpinBox, QDateEdit)
@@ -29,7 +29,7 @@ class Renamer(QWidget, ABC, metaclass=MetaRenamer):
 
 
 class BasicRenamer(Renamer):
-    """ A widget forsimple renaming with controls for prefix, suffix, name, extension,
+    """ A widget for simple renaming with controls for prefix, suffix, name, extension,
     number, and date/time. """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -100,6 +100,7 @@ class BasicRenamer(Renamer):
         # Number
         self.digits = QSpinBox(self)
         self.start = QSpinBox(self)
+        self.start.setMaximum(2147483647)
         # Date
         self.date = QDateEdit(QDate().currentDate(), self)
         self.date.setDisplayFormat('dd-MM-yyyy')
