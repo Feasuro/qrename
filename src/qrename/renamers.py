@@ -187,7 +187,36 @@ class AdvancedRenamer(Renamer):
         layout.addRow(self.tr("Pattern regular expression:"), self.inreg)
         layout.addRow(self.tr("Replacement:"), self.outreg)
         layout.addRow(self.tr("Maximal number of replacements:"), self.count)
+        group = QGroupBox(self.tr('Hints:'))
+        grouplayout = QFormLayout(group)
+        for pattern, meaning in self.hints().items():
+            grouplayout.addRow(QLabel(pattern), QLabel(meaning))
+        layout.addRow(group)
         self.setLayout(layout)
+
+    def hints(self) -> dict:
+        """ Short reference on regular expressions to display. """
+        return {
+            r'\w': self.tr(r'Match a single word character a-z, A-Z, 0-9, and underscore (_)'),
+            r'\d': self.tr(r'Match a single digit 0-9'),
+            r'\s': self.tr(r'Match whitespace including \t, \n, and \r and space character'),
+            r'.':  self.tr(r'Match any character except the newline'),
+            r'\W': self.tr(r'Match a character except for a word character'),
+            r'\D': self.tr(r'Match a character except for a digit'),
+            r'\S': self.tr(r'Match a single character except for a whitespace character'),
+            r'^':  self.tr(r'Match at the beginning of a string'),
+            r'$':  self.tr(r'Match at the end of a string'),
+            r'\b': self.tr(r'Match a position defined as a word boundary'),
+            r'\B': self.tr(r'Match a position that is not a word boundary'),
+            r'(X)':self.tr(r'Capture the X in the group'),
+            r'\N': self.tr(r'Reference the capturing group #N'),
+            r'*':  self.tr(r'Match its preceding element zero or more times. *? for lazy version.'),
+            r'+':  self.tr(r'Match its preceding element one or more times. +? for lazy version.'),
+            r'?':  self.tr(r'Match its preceding element zero or one time. ?? for lazy version.'),
+            r'{n}':self.tr(r'Match its preceding element exactly n times. {n}? for lazy version.'),
+            r'{n , }':  self.tr(r'Match its preceding element at least n times. {n,}? for lazy version.'),
+            r'{n , m}': self.tr(r'Match its preceding element from n to m times {n , m}? for lazy version.'),
+        }
 
     def transform(self, path: str, index: int) -> str:
         """ Performs the string transformation based on the provided regular expressions. """
