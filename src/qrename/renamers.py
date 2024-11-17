@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-
+"""This module contains abstraction and implementation of the widgets handling user controls
+and names transformation logic."""
 import os
 import re
 from abc import ABC, abstractmethod
@@ -31,7 +31,7 @@ class Renamer(QWidget, ABC, metaclass=MetaRenamer):
 class BasicRenamer(Renamer):
     """ A widget for simple renaming with controls for prefix, suffix, name, extension,
     number, and date/time. """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setup_controls()
         self.setup_layout()
@@ -169,7 +169,8 @@ class BasicRenamer(Renamer):
 
 class AdvancedRenamer(Renamer):
     """ A widget for advanced renaming based on provided regular expressions. """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        """ Initializes the advanced renamer window. """
         super().__init__(*args, **kwargs)
         self.setup_controls()
         self.setup_layout()

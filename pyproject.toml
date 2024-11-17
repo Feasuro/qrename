@@ -1,0 +1,41 @@
+[project]
+name = "qrename"
+dynamic = ["version"]
+description = "Batch file renaming gui application."
+authors = [
+    { name="Feasuro", email="feasuro@pm.me" },
+]
+license = {text = "GPL-3.0-or-later"}
+readme = "README.md"
+dependencies = [
+    "PyQt6>=6.7.0",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Environment :: X11 Applications :: Qt",
+    "Topic :: Desktop Environment",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Natural Language :: Polish",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.gui-scripts]
+qrename = "qrename.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["qrename"]
+
+[tool.setuptools.dynamic]
+version = {attr = "qrename.__version__"}
+
+[project.urls]
+Homepage = "https://github.com/Feasuro/qrename"
+Issues = "https://github.com/Feasuro/qrename/issues"

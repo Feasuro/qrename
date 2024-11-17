@@ -1,14 +1,11 @@
-#!/usr/bin/env python
-
-import sys
 import os
 
-from PyQt6.QtCore import Qt, QCommandLineParser, QTranslator, QLibraryInfo, QLocale
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QDockWidget, QVBoxLayout,
-                             QListWidget, QFileDialog, QPushButton, QMessageBox, QTabWidget)
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QDockWidget, QVBoxLayout, QListWidget,
+                             QFileDialog, QPushButton, QMessageBox, QTabWidget)
 
-from renamers import BasicRenamer, AdvancedRenamer
-import resources
+import qrename.resources
+from qrename.renamers import BasicRenamer, AdvancedRenamer
 
 
 class RenameWindow(QMainWindow):
@@ -151,56 +148,3 @@ class RenameWindow(QMainWindow):
         self.files = new_files
         self.display_files()
 
-
-class ArgumentParser(QCommandLineParser):
-    """ Parses command-line arguments. """
-    tr = lambda obj, string: QApplication.translate(type(obj).__name__, string)
-    def __init__(self, *args, **kwargs):
-        """ Initializes the argument parser options. """
-        super().__init__(*args, **kwargs)
-        self.setApplicationDescription(self.tr("Rename files based on user-provided parameters."))
-        self.addHelpOption()
-        self.addVersionOption()
-        self.addPositionalArgument(self.tr("file"),
-                                   self.tr("files to be renamed or containing directory path"),
-                                   self.tr("[directory/file1 file2 ...]"))
-
-    def file_list(self) -> list:
-        """ Returns a list of file paths from positional arguments. """
-        if self.positionalArguments():
-            if os.path.isdir(self.positionalArguments()[0]):
-                return [os.path.abspath(path) for path in os.listdir(self.positionalArguments()[0])]
-            return [os.path.abspath(path) for path in self.positionalArguments() if os.path.lexists(path)]
-        return []
-
-    def check_args(self, app: QApplication) -> None:
-        """ Checks if positional arguments are valid paths. """
-        self.process(app)
-        if self.positionalArguments():
-            for arg in self.positionalArguments():
-                if not os.path.lexists(arg):
-                    print(self.tr("Error: File '{}' does not exist.\n").format(arg))
-                    self.showHelp(exitCode=1)
-
-
-if __name__ == "__main__":
-    # Instantiate the application
-    app = QApplication(sys.argv)
-    app.setApplicationName("Qrename")
-    app.setApplicationVersion("v1.1")
-    # Load translations
-    path = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
-    translator = QTranslator(app)
-    if translator.load(QLocale(), "qtbase", "_", path):
-        app.installTranslator(translator)
-    translator = QTranslator(app)
-    if translator.load(QLocale(), "qrename", "_", ":/i18n"):
-        app.installTranslator(translator)
-    # Parse command line arguments and show window
-    parser = ArgumentParser()
-    parser.check_args(app)
-    window = RenameWindow()
-    window.files = parser.file_list()
-    window.display_files()
-    window.show()
-    sys.exit(app.exec())
